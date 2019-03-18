@@ -1,0 +1,30 @@
+{
+  "name": "sparklephone",
+  "version": "1.0.0",
+  "description": "Send automated messages to Sparkle Donkey Village members via their preferred contact method",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/babygramps/SparklePhone.git"
+  },
+  "author": "BabyG",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/babygramps/SparklePhone/issues"
+  },
+  "homepage": "https://github.com/babygramps/SparklePhone#readme",
+  "dependencies": {
+    "@slack/client": "^4.11.0",
+    "@slack/events-api": "^2.2.0",
+    "body-parser": "^1.18.3",
+    "express": "^4.16.4",
+    "google-spreadsheet": "^2.0.7",
+    "mongoose": "^5.4.19",
+    "nodemailer": "^5.1.1",
+    "slack": "^11.0.2",
+    "twilio": "^3.29.2"
+  }
+}
