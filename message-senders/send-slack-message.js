@@ -2,21 +2,22 @@ const token = 'xoxb-327372090452-562492725825-w586krhfsroHmaNGcFJJpWTz'
 const { WebClient } = require('@slack/client');
 const web = new WebClient(token);
 
-function sendSlackMessage(user, messageBody) {
-  web.im.open({
-    token: token,
-    user: user.to
-  })
-  .then((response) => {
-    if (response.ok === true) {
-      web.chat.postMessage({
-        channel: response.channel.id,
-        text: messageBody,
-        as_user: false,
-        icon_emoji: ':carousel_horse:'
-      })
-    }
-  }).catch((error) => console.log(`Oh no! I caught a whoopsie: ${error.data.error}, for user: ${user.to}`));
+async function sendSlackMessage(user, messageBody) {
+  const open = await web.im.open({
+                token: token,
+                user: user.to
+                });
+  const message = await web.chat.postMessage({
+                    channel: open.channel.id,
+                    text: messageBody,
+                    as_user: false,
+                    icon_emoji: ':carousel_horse:'
+                    });
+  const userInfo = await web.users.info({
+                      token: token,
+                      user: user.to
+                    });
+  console.log(`Awesome! You sent a message to ${userInfo.user.profile.real_name} with this message: "${messageBody}"`);
 }
 
 module.exports = sendSlackMessage;

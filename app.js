@@ -4,7 +4,7 @@ const app = express();
 
 // Dependencies
 const preferences = require('./preferences');
-const sendSlackMessage = require('./message-senders/send-slack-message');
+const sendSlackMessage = require('./message-senders/send-slack-message').default;
 const sendSmsMessage = require('./message-senders/send-sms-message');
 const sendEmailMessage = require('./message-senders/send-email-message');
 const users = require('./db/googlesheets');
