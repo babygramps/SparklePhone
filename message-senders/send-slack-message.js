@@ -15,10 +15,8 @@ function sendSlackMessage(user, messageBody) {
         as_user: false,
         icon_emoji: ':carousel_horse:'
       })
-    } else {
-      console.log(`A whoopsie was found for user ${user.to}: ${response.error}`);
     }
-  });
+  }).catch((error) => console.log(`Oh no! I caught a whoopsie: ${error.data.error}, for user: ${user.to}`));
 }
 
 module.exports = sendSlackMessage;
