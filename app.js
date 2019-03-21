@@ -1,28 +1,30 @@
 /*======================================================================
-                INITIALIZE
+                            INITIALIZE
 ======================================================================*/ 
 
 // Set up Express to work with ngrok, slash commands, and the POST route from https://api.slack.com/apps/AGK0PCC12/event-subscriptions?
 const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
-app.use(bodyParser.urlencoded({extended: true}));
+
 
 // Dependencies
 const preferences = require('./preferences');
-const sendSlackMessage = require('./message-senders/send-slack-message').default;
+const sendSlackMessage = require('./message-senders/send-slack-message');
 const sendSmsMessage = require('./message-senders/send-sms-message');
 const sendEmailMessage = require('./message-senders/send-email-message');
 const users = require('./db/googlesheets');
+// const slash = require('./slash-commands/camp-command')
 
 // Required modules to use slackEvents
 const { createEventAdapter } = require('@slack/events-api');
 const slackEvents = createEventAdapter('8506cf783cdb22de20da83f21fcced39'); // Initialize using signing secret from environment variables
 app.use('/slack/events', slackEvents.expressMiddleware());
+app.use(bodyParser.urlencoded({extended: true})); // MUST be after Slack middleware
 
 
 /*======================================================================
-                SEND MESSAGES
+                SEND MESSAGES POSTED TO #MESSAGE-BLASTING
 ======================================================================*/             
 
 function sendMessage(user, messageBody) {
@@ -51,24 +53,33 @@ slackEvents.on('message', (event)=> {
     }
 });
 
-// var filteredCampers = [];
+/*======================================================================
+                    SEND SLASH COMMANDS
+======================================================================*/  
 
-// app.post('/slack/camp', (req, res) => {
-//     var text = req.body.text
-//     const campName = text.substr(0, text.indexOf(' '));
-//         users.filter((user) => {
-//             if (user.optIn === 'TRUE'){
-//                 filteredCampers.push({user, text});
-//             }
-//             console.log(filteredCampers);
-//         });
-// });
+app.post('/slack/camp', (req, res) => {
+    const filteredCampers = [];
+    const messageBody = req.body.text
+    const campName = messageBody.substr(0, messageBody.indexOf(' '));
+    const message = messageBody.split(campName+" ")[1];
+    
+    if (req.body.channel_id == 'GGXPDR9SQ') {
+        users.filter((user) => {
+            if (user.optIn == 'TRUE' && user.camp == campName){
+                filteredCampers.push(user);
+            }
+        });
+    
+        filteredCampers.forEach((user) => {{
+                sendMessage(user, message);
+            }
+        });
+    } else {
+        console.log(`some dumb fuck named ${req.body.user_name} tried to access /camp without proper permission in ${req.body.channel_name}`);
+    }
+    
+});
 
-// filteredCampers.forEach((user) => {
-//     if (user.camp === 'Miso'){
-//         sendMessage(user, text);
-//     }
-// })
 
 // Start the server and open port 80 locally for ngrok
 app.listen(80, function(){
