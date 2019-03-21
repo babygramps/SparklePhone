@@ -1,6 +1,12 @@
-// Set up Express to work with ngrok and the POST route from https://api.slack.com/apps/AGK0PCC12/event-subscriptions?
+/*======================================================================
+                INITIALIZE
+======================================================================*/ 
+
+// Set up Express to work with ngrok, slash commands, and the POST route from https://api.slack.com/apps/AGK0PCC12/event-subscriptions?
 const express = require('express');
 const app = express();
+const bodyParser = require('body-parser');
+app.use(bodyParser.urlencoded({extended: true}));
 
 // Dependencies
 const preferences = require('./preferences');
@@ -14,14 +20,11 @@ const { createEventAdapter } = require('@slack/events-api');
 const slackEvents = createEventAdapter('8506cf783cdb22de20da83f21fcced39'); // Initialize using signing secret from environment variables
 app.use('/slack/events', slackEvents.expressMiddleware());
 
-// ES6 import and export isn't fully supported in node quite yet, currently it's experimental
 
-/* import preferences from './preferences';
-import sendSlackMessage from './message-senders/send-slack-message.js';
-import sendSmsMessage from './message-senders/send-sms-message.js'; */
+/*======================================================================
+                SEND MESSAGES
+======================================================================*/             
 
-
-// Use switch/case to send event.text from slack message payload to preferred contact methods
 function sendMessage(user, messageBody) {
     switch(user.preferred) {
         case preferred = 'Slack':
@@ -40,9 +43,6 @@ function sendMessage(user, messageBody) {
 
 slackEvents.on('message', (event)=> {
     if(event.channel === 'GGXPDR9SQ' && !event.subtype){
-        // Array.map didn't work here, kept getting: "ReferenceError: user is not defined". Went with a trusty ol' array.forEach
-        // users.map(user => sendMessage(user));
-
         users.forEach((user)=> {
             if (user.optIn === 'TRUE'){
                 sendMessage(user, event.text);
@@ -50,6 +50,25 @@ slackEvents.on('message', (event)=> {
         });
     }
 });
+
+// var filteredCampers = [];
+
+// app.post('/slack/camp', (req, res) => {
+//     var text = req.body.text
+//     const campName = text.substr(0, text.indexOf(' '));
+//         users.filter((user) => {
+//             if (user.optIn === 'TRUE'){
+//                 filteredCampers.push({user, text});
+//             }
+//             console.log(filteredCampers);
+//         });
+// });
+
+// filteredCampers.forEach((user) => {
+//     if (user.camp === 'Miso'){
+//         sendMessage(user, text);
+//     }
+// })
 
 // Start the server and open port 80 locally for ngrok
 app.listen(80, function(){

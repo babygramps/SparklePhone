@@ -12,7 +12,8 @@ doc.useServiceAccountAuth(creds, function (err) {
                 lastname : user.lastname,
                 preferred : user.preferred,
                 to : user.config,
-                optIn: user.optin
+                optIn: user.optin,
+                camp: user.camp
                 });
             });
         });
