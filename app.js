@@ -13,8 +13,7 @@ const preferences = require('./preferences');
 const sendSlackMessage = require('./message-senders/send-slack-message');
 const sendSmsMessage = require('./message-senders/send-sms-message');
 const sendEmailMessage = require('./message-senders/send-email-message');
-const users = require('./db/googlesheets');
-// const slash = require('./slash-commands/camp-command')
+const getUsers = require('./db/googlesheets');
 
 // Required modules to use slackEvents
 const { createEventAdapter } = require('@slack/events-api');
@@ -45,39 +44,58 @@ function sendMessage(user, messageBody) {
 
 slackEvents.on('message', (event)=> {
     if(event.channel === 'GGXPDR9SQ' && !event.subtype){
-        users.forEach((user)=> {
-            if (user.optIn === 'TRUE'){
-                sendMessage(user, event.text);
-            }
-        });
+        getUsers()
+        .then(response => {
+            response.forEach((user)=> {
+                if (user.optin === 'TRUE'){
+                    sendMessage(user, event.text);
+                }
+            });
+        })
+        
     }
 });
+
+// function isOptedIn(){
+//    users.filter(user => {
+//        if (user.opt === 'TRUE'){
+//             return user;
+//         }
+//     });
+// }
+
+// function isUserInCamp(campName){
+//     users.filter(user => {
+//         if(user.camp === campName){
+//             return user;
+//         }
+//     });
+// }
 
 /*======================================================================
                     SEND SLASH COMMANDS
 ======================================================================*/  
 
 app.post('/slack/camp', (req, res) => {
-    const filteredCampers = [];
     const messageBody = req.body.text
     const campName = messageBody.substr(0, messageBody.indexOf(' '));
     const message = messageBody.split(campName+" ")[1];
     
-    if (req.body.channel_id == 'GGXPDR9SQ') {
+    // users
+    // .filter(isOptedIn(isUserInCamp));
+
+     if (req.body.channel_id == 'GGXPDR9SQ') {
         users.filter((user) => {
-            if (user.optIn == 'TRUE' && user.camp == campName){
+            if (user.optIn === 'TRUE' && user.camp === campName){
                 filteredCampers.push(user);
             }
         });
     
-        filteredCampers.forEach((user) => {{
+        filteredCampers.forEach((user) => {
                 sendMessage(user, message);
-            }
         });
-    } else {
         console.log(`some dumb fuck named ${req.body.user_name} tried to access /camp without proper permission in ${req.body.channel_name}`);
-    }
-    
+    } 
 });
 
 

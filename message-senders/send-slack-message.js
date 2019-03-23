@@ -5,7 +5,7 @@ const web = new WebClient(token);
 async function sendSlackMessage(user, messageBody) {
   const open = await web.im.open({
                 token: token,
-                user: user.to
+                user: user.config
                 });
   const message = await web.chat.postMessage({
                     channel: open.channel.id,
@@ -15,7 +15,7 @@ async function sendSlackMessage(user, messageBody) {
                     });
   const userInfo = await web.users.info({
                       token: token,
-                      user: user.to
+                      user: user.config
                     });
   console.log(`Awesome! You sent a message to ${userInfo.user.profile.real_name} with this message: "${messageBody}"`);
 }
