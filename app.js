@@ -9,7 +9,6 @@ const bodyParser = require('body-parser');
 
 
 // Dependencies
-const preferences = require('./preferences');
 const sendSlackMessage = require('./message-senders/send-slack-message');
 const sendSmsMessage = require('./message-senders/send-sms-message');
 const sendEmailMessage = require('./message-senders/send-email-message');
@@ -19,10 +18,8 @@ const getUsers = require('./db/googlesheets');
 const { createEventAdapter } = require('@slack/events-api');
 const slackEvents = createEventAdapter('8506cf783cdb22de20da83f21fcced39'); // Initialize using signing secret from environment variables
 app.use('/slack/events', slackEvents.expressMiddleware());
-app.use(bodyParser.urlencoded({extended: true})); // MUST be after Slack middleware        
+app.use(bodyParser.urlencoded({extended: true})); // MUST be after Slack middleware
 
-// The channel that triggers our messages. Maybe we want this to be changed programmatically?
-const approvedSendChannel = 'GGXPDR9SQ';
 
 /*======================================================================
                     🤖  MESSAGE ROUTING  🤖 
@@ -46,7 +43,10 @@ function sendMessage(user, messageBody) {
 
 /*======================================================================
                 🤑 SEND ALL MESSAGES POSTED TO #MESSAGE-BLASTING 🤑
-======================================================================*/    
+======================================================================*/
+
+// The channel that triggers our messages. Maybe we want this to be changed programmatically?
+const approvedSendChannel = 'GGXPDR9SQ';
 
 slackEvents.on('message', (slackMessage)=> {
     if(slackMessage.channel === approvedSendChannel && !slackMessage.subtype){
@@ -86,13 +86,13 @@ app.post('/slack/list', (req, res) => {
 ======================================================================*/    
 
 function filterOptedInUsers(users){
-    const optedIn = users.filter((camper) => camper.optin === 'TRUE');
+    const optedIn = users.filter((camper) => camper.optin === true);
     return optedIn;
 }
 
  function filterByListSubscribed(users, listName){
      const Subscribed = users.filter((user) => user.list === listName);
-     return Subscribed
+     return Subscribed;
 }
 
 // Start the server and open port 80 locally for ngrok
