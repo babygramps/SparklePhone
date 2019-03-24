@@ -25,7 +25,7 @@ app.use(bodyParser.urlencoded({extended: true})); // MUST be after Slack middlew
 const approvedSendChannel = 'GGXPDR9SQ';
 
 /*======================================================================
-                    MESSAGE ROUTING
+                    🤖  MESSAGE ROUTING  🤖 
 ======================================================================*/    
 
 function sendMessage(user, messageBody) {
@@ -45,19 +45,21 @@ function sendMessage(user, messageBody) {
 }
 
 /*======================================================================
-                SEND ALL MESSAGES POSTED TO #MESSAGE-BLASTING
+                🤑 SEND ALL MESSAGES POSTED TO #MESSAGE-BLASTING 🤑
 ======================================================================*/    
 
 slackEvents.on('message', (slackMessage)=> {
     if(slackMessage.channel === approvedSendChannel && !slackMessage.subtype){
         getUsers()
-        .then((returnedCampers) => isCamperOptedIn(returnedCampers))
-        .then((optedInCampers) => optedInCampers.forEach(camper => sendMessage(camper, slackMessage.text)));
+        .then((returnedUsers) => filterOptedInUsers(returnedUsers))
+        .then((optedInUsers) => {
+            optedInUsers.forEach(user => sendMessage(user, slackMessage.text))
+        });
     }
 });
 
 /*======================================================================
-                    SEND SLASH COMMANDS
+                     😱  SEND SLASH COMMANDS  😱 
 ======================================================================*/  
 
 app.post('/slack/list', (req, res) => {
@@ -69,12 +71,13 @@ app.post('/slack/list', (req, res) => {
 
      if (messageSentFromChannel == approvedSendChannel) {
         getUsers()
-        .then(returnedCampers => {
-            isUserSubscribedToList(isCamperOptedIn(returnedCampers), listName)
-            .forEach(camper => sendMessage(camper, message))
+        .then(returnedUsers => {
+            let subscribedUsers = filterByListSubscribed(returnedUsers, listName);
+            let optedInUsers = filterOptedInUsers(subscribedUsers);
+            optedInUsers.forEach(user => sendMessage(user, message))
         })
     } else {
-        console.log(`some dumb fuck named ${req.body.user_name} tried to access /camp without proper permission in ${req.body.channel_name}`);
+        console.log(`someone named ${requestBody.user_name} tried to access /list without proper permission in ${requestBody.channel_name}`);
     }
 });
 
@@ -82,14 +85,14 @@ app.post('/slack/list', (req, res) => {
                     🙃 FUN FUN FUNCTIONS 🙃
 ======================================================================*/    
 
-function isCamperOptedIn(camperList){
-    const optedIn = camperList.filter((camper) => camper.optin === 'TRUE');
+function filterOptedInUsers(users){
+    const optedIn = users.filter((camper) => camper.optin === 'TRUE');
     return optedIn;
 }
 
- function isUserSubscribedToList(camperList, listName){
-     const isSubscribed = camperList.filter((camper) => camper.list === listName);
-     return isSubscribed
+ function filterByListSubscribed(users, listName){
+     const Subscribed = users.filter((user) => user.list === listName);
+     return Subscribed
 }
 
 // Start the server and open port 80 locally for ngrok
