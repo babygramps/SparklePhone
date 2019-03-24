@@ -19,12 +19,14 @@ const getUsers = require('./db/googlesheets');
 const { createEventAdapter } = require('@slack/events-api');
 const slackEvents = createEventAdapter('8506cf783cdb22de20da83f21fcced39'); // Initialize using signing secret from environment variables
 app.use('/slack/events', slackEvents.expressMiddleware());
-app.use(bodyParser.urlencoded({extended: true})); // MUST be after Slack middleware
+app.use(bodyParser.urlencoded({extended: true})); // MUST be after Slack middleware        
 
+// The channel that triggers our messages. Maybe we want this to be changed programmatically?
+const approvedSendChannel = 'GGXPDR9SQ';
 
 /*======================================================================
-                SEND MESSAGES POSTED TO #MESSAGE-BLASTING
-======================================================================*/             
+                    MESSAGE ROUTING
+======================================================================*/    
 
 function sendMessage(user, messageBody) {
     switch(user.preferred) {
@@ -42,62 +44,53 @@ function sendMessage(user, messageBody) {
     }
 }
 
-slackEvents.on('message', (event)=> {
-    if(event.channel === 'GGXPDR9SQ' && !event.subtype){
+/*======================================================================
+                SEND ALL MESSAGES POSTED TO #MESSAGE-BLASTING
+======================================================================*/    
+
+slackEvents.on('message', (slackMessage)=> {
+    if(slackMessage.channel === approvedSendChannel && !slackMessage.subtype){
         getUsers()
-        .then(response => {
-            response.forEach((user)=> {
-                if (user.optin === 'TRUE'){
-                    sendMessage(user, event.text);
-                }
-            });
-        })
-        
+        .then((returnedCampers) => isCamperOptedIn(returnedCampers))
+        .then((optedInCampers) => optedInCampers.forEach(camper => sendMessage(camper, slackMessage.text)));
     }
 });
-
-// function isOptedIn(){
-//    users.filter(user => {
-//        if (user.opt === 'TRUE'){
-//             return user;
-//         }
-//     });
-// }
-
-// function isUserInCamp(campName){
-//     users.filter(user => {
-//         if(user.camp === campName){
-//             return user;
-//         }
-//     });
-// }
 
 /*======================================================================
                     SEND SLASH COMMANDS
 ======================================================================*/  
 
-app.post('/slack/camp', (req, res) => {
-    const messageBody = req.body.text
-    const campName = messageBody.substr(0, messageBody.indexOf(' '));
-    const message = messageBody.split(campName+" ")[1];
-    
-    // users
-    // .filter(isOptedIn(isUserInCamp));
+app.post('/slack/list', (req, res) => {
+    const requestBody = req.body;
+    const messageBody = requestBody.text;
+    const listName = messageBody.substr(0, messageBody.indexOf(' '));
+    const message = messageBody.split(listName+" ")[1];
+    const messageSentFromChannel = requestBody.channel_id;
 
-     if (req.body.channel_id == 'GGXPDR9SQ') {
-        users.filter((user) => {
-            if (user.optIn === 'TRUE' && user.camp === campName){
-                filteredCampers.push(user);
-            }
-        });
-    
-        filteredCampers.forEach((user) => {
-                sendMessage(user, message);
-        });
+     if (messageSentFromChannel == approvedSendChannel) {
+        getUsers()
+        .then(returnedCampers => {
+            isUserSubscribedToList(isCamperOptedIn(returnedCampers), listName)
+            .forEach(camper => sendMessage(camper, message))
+        })
+    } else {
         console.log(`some dumb fuck named ${req.body.user_name} tried to access /camp without proper permission in ${req.body.channel_name}`);
-    } 
+    }
 });
 
+/*======================================================================
+                    🙃 FUN FUN FUNCTIONS 🙃
+======================================================================*/    
+
+function isCamperOptedIn(camperList){
+    const optedIn = camperList.filter((camper) => camper.optin === 'TRUE');
+    return optedIn;
+}
+
+ function isUserSubscribedToList(camperList, listName){
+     const isSubscribed = camperList.filter((camper) => camper.list === listName);
+     return isSubscribed
+}
 
 // Start the server and open port 80 locally for ngrok
 app.listen(80, function(){
