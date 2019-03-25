@@ -12,7 +12,7 @@ const client = new twilio(accountSid, authToken);
 function sendSmsMessage(user, messageBody) {
   client.messages.create({
     body: `${user.firstname}, there's a new announcement from SparklePhone: ${messageBody}`,
-    to: user.to,  // Text these numbers
+    to: user.config,  // Text these numbers
     from: twilioNumber
   })
   .then((message) => console.log(message.sid));

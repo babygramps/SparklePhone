@@ -1,21 +1,19 @@
-const GoogleSpreadsheet   = require('google-spreadsheet');
-const creds               = require('./client-secret.json');
-const doc                 = new GoogleSpreadsheet('1TJwqiJAawPQOLBo6Na5hDEBcUp8MoioirxvwA4TRD7Y');
+const GoogleSpreadsheet     = require('google-spreadsheet');
+const creds                 = require('./client-secret.json');
+const util             = require('util');
 
-var users = [];
+async function getUsers(){
+    const doc = await new GoogleSpreadsheet('1TJwqiJAawPQOLBo6Na5hDEBcUp8MoioirxvwA4TRD7Y');
+    await util.promisify(doc.useServiceAccountAuth)(creds);
+    const users = await util.promisify(doc.getRows)(1);
 
-doc.useServiceAccountAuth(creds, function (err) {   
-    doc.getRows(1, function (err, rows) {
-        rows.forEach(function (user){
-           users.push({
-                firstname : user.firstname,
-                lastname : user.lastname,
-                preferred : user.preferred,
-                to : user.config,
-                optIn: user.optin
-                });
-            });
-        });
-});
-    
-    module.exports = users;
+    // Google sheets sends strings only, no booleans
+    // Once users are received from the DB, {optin: 'TRUE'} && {optin: 'FALSE'} are coerced to booleans
+    const coerceOptinToBoolean = users.map((user) => {
+        user.optin = (user.optin === 'TRUE') ? true : false;
+        return user;
+    });
+    return coerceOptinToBoolean;
+}
+
+    module.exports = getUsers;
