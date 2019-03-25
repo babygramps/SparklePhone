@@ -74,8 +74,13 @@ app.post('/slack/list', (req, res) => {
         .then(returnedUsers => {
             let subscribedUsers = filterByListSubscribed(returnedUsers, listName);
             let optedInUsers = filterOptedInUsers(subscribedUsers);
+            if (optedInUsers.length === 0) {
+                res.send(`🤔 Hmmm.... there's no list called ${listName}`);
+            }
             optedInUsers.forEach(user => sendMessage(user, message))
+            res.send(`😍 Good job! Your message made it to everyone in the ${listName} list!`);
         })
+        .catch(err => console.error(err));
     } else {
         console.log(`someone named ${requestBody.user_name} tried to access /list without proper permission in ${requestBody.channel_name}`);
     }
@@ -97,5 +102,5 @@ function filterOptedInUsers(users){
 
 // Start the server and open port 80 locally for ngrok
 app.listen(80, function(){
-    console.log('server has started.....');
+    console.log('🚀 SparklePhone has blasted off Captain!...... 🚀');
 });
