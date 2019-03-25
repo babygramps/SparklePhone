@@ -8,7 +8,7 @@ async function getUsers(){
     const users = await util.promisify(doc.getRows)(1);
 
     // Google sheets sends strings only, no booleans
-    // Once users are received from the DB, {optin: 'TRUE'} && {optin: 'FALSE'} are coerced to booleans
+    // Once users are received from the DB, {optin: 'TRUE'} is coerced to true, everything else will be false
     const coerceOptinToBoolean = users.map((user) => {
         user.optin = (user.optin === 'TRUE') ? true : false;
         return user;
