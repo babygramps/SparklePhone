@@ -2,13 +2,13 @@ const express = require('express');
 const router =  express.Router();
 
 // Useful functions
-const functions = require('./useful-functions/funfunfunctions');
+const functions = require('../useful-functions/funfunfunctions');
 const filterByListSubscribed = functions.filterByListSubscribed;
 const filterOptedInUsers = functions.filterOptedInUsers;
 
 // DB and message sending logic
-const sendMessage = require('./message-senders/message-routing');
-const getUsers = require('./db/googlesheets');
+const sendMessage = require('../message-senders/message-routing');
+const getUsers = require('../db/googlesheets');
 
 
 // The channel that triggers our messages. Maybe we want this to be changed programmatically?

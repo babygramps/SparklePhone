@@ -1,4 +1,6 @@
-const token = 'xoxb-327372090452-562492725825-w586krhfsroHmaNGcFJJpWTz'
+const dotenv = require('dotenv');
+dotenv.config();
+const token = process.env.SLACK_ACCESS_TOKEN;
 const { WebClient } = require('@slack/client');
 const web = new WebClient(token);
 
