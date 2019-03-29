@@ -15,6 +15,10 @@ const slashInteractiveReceive = require('./interactive-bits/interactive-response
 app.use('/slack/list', slashInteractive);
 app.use('/slack/list/receive', slashInteractiveReceive);
 
+app.get('/', (req, res) =>{
+    res.send('SparklePhone is alive!')
+})
+
 // Start the server and open port 80 locally for ngrok
 app.listen(process.env.PORT, function(){
     console.log('🚀 SparklePhone has blasted off Captain!...... 🚀');
