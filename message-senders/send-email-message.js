@@ -13,21 +13,24 @@ var transporter = nodemailer.createTransport({
        }
    });
 
-function sendEmailMessage(user, messageBody){
+async function sendEmailMessage(user, messageBody){
     var mailOptions = {
         from: emailUsername, // sender address
         to: user.config, // list of receivers
-        subject: 'there\'s a new announcement from SparklePhone 📣', // Subject line
-        html:   `<h3>Hey ${user.firstname}, here's the latest update from Sparkle Donkey Village:</h3>
+        subject: `There's a new announcement from SparklePhone 📣`, // Subject line
+        html:   `<h3>Hey ${user.firstname}, here's the latest update from ${user.list}:</h3>
                 <br> 
                 <p>${messageBody} </p>`
       };
-    transporter.sendMail(mailOptions, function (err, info) {
-    if(err)
-      console.log(err)
-    else
-      console.log(info);
- });
+      const mailSent = await transporter.sendMail(mailOptions); // send the message and await the response from Gmail
+      mailSent.method = 'email'
+      mailSent.user = user.config
+      if (mailSent.accepted.length > 0) {
+        mailSent.result = true
+      } else {
+        mailSent.result = false
+      }
+      return mailSent;
 }
 
 module.exports = sendEmailMessage;

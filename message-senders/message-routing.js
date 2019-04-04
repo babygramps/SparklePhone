@@ -5,18 +5,14 @@ const sendFacebookMessage = require('../message-senders/send-fb-message');
 
 function sendMessage(user, messageBody) {
     switch(user.preferred) {
-        case preferred = 'Slack':
-            sendSlackMessage(user, messageBody);
-            break;
-        case preferred = 'Phone':
-            sendSmsMessage(user, messageBody);
-            break;
+        case preferred = 'Slack': 
+            return sendSlackMessage(user, messageBody);
         case preferred = 'Email':
-            sendEmailMessage(user, messageBody);
-            break;
+            return sendEmailMessage(user, messageBody);
+        case preferred = 'Phone':
+           return sendSmsMessage.sendSmsMessage(user, messageBody)
         case preferred = 'Facebook':
-            sendFacebookMessage(user, messageBody);
-            break;
+            return sendFacebookMessage(user, messageBody);
         default:
             console.log(`Encountered unknown preference: ${user.preferred}`);
     }
