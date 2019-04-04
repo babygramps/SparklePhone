@@ -1,5 +1,6 @@
 const dotenv = require('dotenv');
 dotenv.config();
+
 const token = process.env.SLACK_ACCESS_TOKEN;
 const express = require('express');
 const router = express.Router();
@@ -8,78 +9,46 @@ const app = express();
 app.use(bodyParser.urlencoded({extended: true}));
 
 const slack = require('slack');
-const functions = require('../useful-functions/funfunfunctions');
-const filterByListSubscribed = functions.filterByListSubscribed;
-const filterOptedInUsers = functions.filterOptedInUsers;
+
+const filteringFunctions = require('../useful-functions/filtering-functions');
 const getUsers = require('../db/googlesheets');
+const objectFormatting = require('../useful-functions/object-formatting');
 
 const sendMessage = require('../message-senders/message-routing');
 
-const approvedSendChannel = 'GGXPDR9SQ';
+const approvedSendChannel = process.env.SLACK_CHANNEL;
 
+router.post('/', async function (req, res){
+    res.status(200).end();
+    try {
+        const payload = JSON.parse(req.body.payload);
+        const messageSentFromChannel = payload.channel.id
+        const listName = payload.submission.list
+        const message = payload.submission.message
 
-router.post('/', (req, res) =>{
-    const body = req.body;
-    const payload = body.payload;
-    const parsedPayload = JSON.parse(payload);
-    const messageSentFromChannel = parsedPayload.channel.id
-    const listName = parsedPayload.submission.list
-    const message = parsedPayload.submission.message
-
-    if (messageSentFromChannel == approvedSendChannel) {
-        getUsers()
-        .then(returnedUsers => {
-            let subscribedUsers = filterByListSubscribed(returnedUsers, listName);
-            let optedInUsers = filterOptedInUsers(subscribedUsers);
+        if (messageSentFromChannel == approvedSendChannel) {
+            const users = await getUsers();
+            const subscribedUsers = filteringFunctions.filterByListSubscribed(users, listName);
+            const optedInUsers = filteringFunctions.filterOptedInUsers(subscribedUsers);
+            
             if (optedInUsers.length > 0) {
-                optedInUsers.forEach(user => sendMessage(user, message))
-                slack.im.open({
-                    token: token,
-                    user: parsedPayload.user.id,
-                    return_im: true
-                    })
-                .then(response => {
-                    slack.chat.postEphemeral(messageBody(token, response.channel.id, '⏱ Message sending....', parsedPayload.user.id))
-                    console.log(response);
-                })
-                .then(response => {
-                    slack.chat.postMessage(messageBody(token, parsedPayload.user.id, '🤠 Hoozah! Message sent.'))
-                })
-                res.status(200).end();
+                let opened = await slack.im.open({token: token, user: payload.user.id, return_im: true}); // Open slack channel with initial sender
+                slack.chat.postEphemeral(objectFormatting.messageBody(token, opened.channel.id, '⏱ Message sending....', payload.user.id)); // Send 'sending' message
+                const messageSendPromiseArray = optedInUsers.map((user) => sendMessage(user, message)); // Send messages to users and return promises
+                Promise.all(messageSendPromiseArray)
+                .then(promises => objectFormatting.createLog(promises, payload.user.id)) // Send status/log message to initial user
+                .then(() => slack.chat.postMessage(objectFormatting.messageBody(token, payload.user.id, '🤠 Hoozah! Message sent.')));
             } else {
-                slack.im.open({
-                    token: token,
-                    user: parsedPayload.user.id
-                    })
-                .then(response => {
-                    slack.chat.postEphemeral(messageBody(token, response.channel.id, ` 😖 Shucks, no one opted in on that list, so the message didn't make it to anyone`, parsedPayload.user.id))
-                    res.status(200).end();
-                })
+                let opened = await slack.im.open({token: token, user: payload.user.id, return_im: true});
+                slack.chat.postEphemeral(objectFormatting.messageBody(token, opened.channel.id, ` 😖 Shucks, no one opted in on that list, so the message didn't make it to anyone`, payload.user.id))
+                res.status(200).end();
             }
-        })
-        .catch(err => console.error(err));
-    } else {
-        slack.im.open({
-            token: token,
-            user: parsedPayload.user.id
-            })
-            .then(response => {
-                console.log(response);
-                slack.chat.postMessage(messageBody(token, parsedPayload.user.id, `Tisk tisk now, you can't use /list in that channel`));
-            })
-        console.log(`someone named ${parsedPayload.user.name} tried to access /list without proper permission in ${messageSentFromChannel}`);
+        } else {
+            await slack.im.open({token: token, user: payload.user.id})
+            slack.chat.postMessage(objectFormatting.messageBody(token, payload.user.id, `Tisk tisk now, you can't use /list in that channel`));
+        }
     }
+    catch(err){console.log(err)};
 })
-
-function messageBody(token, channel, text, user){
-    let body = {
-        token: token,
-        channel: channel,
-        text: text,
-        as_user: true,
-        user: user
-    }
-    return body;
-}
 
 module.exports = router;
