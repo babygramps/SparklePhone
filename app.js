@@ -6,18 +6,17 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const app = express();
 app.use(bodyParser.urlencoded({extended: true}));
+app.disable('x-powered-by');
 
 // Dependencies
 const slashInteractive = require('./interactive-bits/interactive-receive');
 const slashInteractiveReceive = require('./interactive-bits/interactive-response');
+const smsStatus = require('./message-senders/send-sms-message');
 
-// Receive interactive command with /list
+// Routes
+app.use('/smsstatus', smsStatus.router);
 app.use('/slack/list', slashInteractive);
 app.use('/slack/list/receive', slashInteractiveReceive);
-
-app.get('/', (req, res) =>{
-    res.send('SparklePhone is alive!')
-})
 
 // Start the server and open port 80 locally for ngrok
 app.listen(process.env.PORT, function(){
