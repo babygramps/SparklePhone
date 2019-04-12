@@ -11,7 +11,7 @@ const router = express.Router();
 // DB and message sending logic
 const getUsers = require('../db/googlesheets');
 
-const objectFormatting = require('../useful-functions/object-formatting');
+const objectFormatting = require('../useful-functions/index');
 
 router.post('/', async function (req, res){
   try{
@@ -42,8 +42,8 @@ router.post('/', async function (req, res){
           ]
       }
       let users = await getUsers();
-      dialogToSend = objectFormatting.createDialog(skeletonDialog, users);
-      objectFormatting.openDialog(dialogToSend, token, triggerId);
+      dialogToSend = objectFormatting.objectFormattingFunctions.createDialog(skeletonDialog, users);
+      objectFormatting.objectFormattingFunctions.openDialog(dialogToSend, token, triggerId);
     }
     catch(err){
       console.log(err);
