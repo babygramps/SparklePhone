@@ -3,3 +3,5 @@ node_modules
 .env
 
 interactive-bits/interactive-response-testfire.js
+
+useful-functions/filtering-functions.js
