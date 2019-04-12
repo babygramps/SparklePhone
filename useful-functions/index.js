@@ -8,16 +8,14 @@ const objectFormattingFunctions = {
 
 // Take an array and add list items for interactive drop down message
 createDialog: function (text, users){
-    // Return lists without duplicates
-    const newArray = users.map(user => user.list = user.list.split(', '))
 
-    function flattenDeep(arr1) {
-        return arr1.reduce((acc, val) => Array.isArray(val) ? acc.concat(flattenDeep(val)) : acc.concat(val), []);
-     }
-    let flattened = flattenDeep(newArray);// [1, 2, 3, 1, 2, 3, 4, 2, 3, 4]
-
+    // remove commas from array.list and return in an array
+    const splitArray = users.map(user => user.list = user.list.split(', '))
+    // flatten the split array
+    const flattened = splitArray.reduce((acc, val) => Array.isArray(val) ? acc.concat(flattenDeep(val)) : acc.concat(val), []);
+    // remove duplicates in the flattened array
     const lists = [...new Set(flattened)]
-
+    // push each element in the flattened, formatted array into drop-down list items
     lists.forEach(listItem => {
         text.elements[1].options.push({
             label: listItem,
@@ -49,10 +47,8 @@ createDialog: function (text, users){
                 fields: []
             }
         ]
-    
+        // remove duplicate elements from user.method
         const sendMethodsWithoutDuplicates = Array.from(new Set(response.map(user => user.method)))
-        console.log(response)
-        console.log(sendMethodsWithoutDuplicates)
     
         sendMethodsWithoutDuplicates.forEach(method =>{
             switch (method) {
@@ -75,6 +71,7 @@ createDialog: function (text, users){
         })
     
         function modifySlackBlock(method, users){
+            // make first character uppercase
             slackFormat[0].text.text = '*'+jsUcfirst(`*${method}* messages sent to:`);
             slackFormat[1].fields = [];
             users.forEach(user => {
@@ -91,16 +88,6 @@ createDialog: function (text, users){
             return string.charAt(1).toUpperCase() + string.slice(2);
             }
     },
-    messageBody: function (token, channel, text, user){
-        let body = {
-            token: token,
-            channel: channel,
-            text: text,
-            as_user: true,
-            user: user
-        }
-        return body;
-    }
 }
 
 const filteringFunctions = {
